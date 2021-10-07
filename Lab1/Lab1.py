@@ -140,4 +140,3 @@ chi2 = scipy.stats.chisquare(df.gtrends)
 
 #Wilcoxon rank-sum
 scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
-
