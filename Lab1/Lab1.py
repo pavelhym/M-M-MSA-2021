@@ -119,3 +119,4 @@ pylab.show()
 stats.kstest(df.gtrends, np.random.normal(mu_est, sigma_est, 1000)  ,alternative='two-sided', mode='auto')
 
 #Omega squared test
+
