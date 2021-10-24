@@ -97,10 +97,12 @@ for i in df.columns[1:12]:
 
 #Lognormal
 def getLL_lognormal(params, data):
-    mu,sigma,m = params
+    #mu,sigma,m = params
     #neg_log_lik = -np.sum(np.log(1/(data*sigma*np.sqrt(2*np.pi))) - (((np.log(data)-mu)/m)**2)/(2*sigma**2))
-    neg_log_lik = -np.sum(-((np.log((data-mu)/m))**2/(2*sigma**2)) - (data - mu)*sigma*np.sqrt(2*np.pi))
-
+    #neg_log_lik = -np.sum(-((np.log((data-mu)/m))**2/(2*sigma**2)) - (data - mu)*sigma*np.sqrt(2*np.pi))
+    s,loc,scale = params
+    x = (data - loc)/scale
+    neg_log_lik = -np.sum(-np.log(s*x*np.sqrt(2*np.pi)) - np.log(x)**2/(2*s**2))
     return neg_log_lik
 
 
