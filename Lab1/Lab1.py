@@ -59,7 +59,7 @@ data = df.gtrends
 
 def get_best_distribution(data):
     #dist_names = ["norm", "exponweib", "weibull_max", "weibull_min", "pareto", "genextreme"]
-    dist_names = ["norm", "expon", "chi2", "exponnorm", "lognorm", "gamma"]
+    dist_names = ["norm", "expon",'chi2' ,"exponnorm", "lognorm", "gamma"]
     #dist_name = "lognorm"
     dist_results = []
     params = {}
@@ -91,51 +91,58 @@ for i in df.columns[1:12]:
 
 
 
-
+df.columns
 
 # Estimating wil MLE
 
 #Lognormal
-def getLL_lognormal(params, data):
-    #mu,sigma,m = params
-    #neg_log_lik = -np.sum(np.log(1/(data*sigma*np.sqrt(2*np.pi))) - (((np.log(data)-mu)/m)**2)/(2*sigma**2))
-    #neg_log_lik = -np.sum(-((np.log((data-mu)/m))**2/(2*sigma**2)) - (data - mu)*sigma*np.sqrt(2*np.pi))
-    s,loc,scale = params
-    x = (data - loc)/scale
-    neg_log_lik = -np.sum(-np.log(s*x*np.sqrt(2*np.pi)) - np.log(x)**2/(2*s**2) - np.log(scale))
-    return neg_log_lik 
+for names in ['Adj_Close', 'gtrends','Comments_int',"tweet_num"]:
+    var = df[str(names)]
+    def getLL_lognormal(params, data):
+        #mu,sigma,m = params
+        #neg_log_lik = -np.sum(np.log(1/(data*sigma*np.sqrt(2*np.pi))) - (((np.log(data)-mu)/m)**2)/(2*sigma**2))
+        #neg_log_lik = -np.sum(-((np.log((data-mu)/m))**2/(2*sigma**2)) - (data - mu)*sigma*np.sqrt(2*np.pi))
+        s,loc,scale = params
+        x = (data - loc)/scale
+        neg_log_lik = -np.sum(-np.log(s*x*np.sqrt(2*np.pi)) - np.log(x)**2/(2*s**2) - np.log(scale))
+        return neg_log_lik 
 
 
-results_ML_lognorm = minimize(getLL_lognormal, [1,2,6],bounds = ((None, None), (0, None),(0, None)) , args = (df.gtrends))
-mu_est_ML, sigma_est_ML, scale_est_ML = results_ML_lognorm.x
-#by ML from package
-ols_params = get_best_distribution(df.gtrends)[2]
-scipy.stats.lognorm.fit(df.gtrends)
+    results_ML_lognorm = minimize(getLL_lognormal, [x+1 for x in list(scipy.stats.lognorm.fit(var))],bounds = ((None, None), (0.000000001, None),(0.000000001, None)) , args = (var))
+    mu_est_ML, sigma_est_ML, scale_est_ML = results_ML_lognorm.x
+    #by ML from package
+    ols_params = get_best_distribution(var)[2]
+    list(scipy.stats.lognorm.fit(var))
+    [x+1 for x in list(scipy.stats.lognorm.fit(var))]
 
 
 
-#by OLS
-def OLS_lognorm(params, data):
-    s,loc,scale = params
-    quantiles = [0.15,0.25,0.35,0.45,0.5,0.65,0.75,0.85,0.95]
-    #s = np.random.normal(mu, sigma, 1000)
-    err = 0
-    for int in range(0,100,5):
-        i = int/100
-        #err += (np.quantile(data, i) - norm.ppf(i, loc=mu, scale=sigma))**2
-        err += (i - scipy.stats.lognorm.cdf(np.quantile(data, i), s, loc,scale))**2
-    return err
+    #by OLS
+    def OLS_lognorm(params, data):
+        s,loc,scale = params
+        quantiles = [0.15,0.25,0.35,0.45,0.5,0.65,0.75,0.85,0.95]
+        #s = np.random.normal(mu, sigma, 1000)
+        err = 0
+        for int in range(0,100,5):
+            i = int/100
+            #err += (np.quantile(data, i) - norm.ppf(i, loc=mu, scale=sigma))**2
+            err += (i - scipy.stats.lognorm.cdf(np.quantile(data, i), s, loc,scale))**2
+        return err
 
-results_OLS_lognorm = minimize(OLS_lognorm, [1,2,6],bounds = ((None, None), (0, None),(0, None)) , args = (df.gtrends))
-mu_est_OLS, sigma_est_OLS, scale_est_OLS = results_OLS_lognorm.x
+    results_OLS_lognorm = minimize(OLS_lognorm, [x+1 for x in list(scipy.stats.lognorm.fit(var))],bounds = ((None, None), (0.000001, None),(0.000000001, None)) , args = (var))
+    mu_est_OLS, sigma_est_OLS, scale_est_OLS = results_OLS_lognorm.x
+
+    print(str(names))
+    print("Results by package ML:")
+    print(scipy.stats.lognorm.fit(var))
+    print("Results by handmade ML:")
+    print(results_ML_lognorm.x)
+
+    print("Results by handmade OLS:")
+    print(results_OLS_lognorm.x)
 
 
-print("Results by handmade ML:")
-print(results_ML_lognorm.x)
-print("Results by package ML:")
-print(scipy.stats.lognorm.fit(df.gtrends))
-print("Results by handmade OLS:")
-print(results_OLS_lognorm.x)
+
 
 
 
@@ -162,12 +169,12 @@ def OLS_gauss(params, data):
     #for int in range(0,100,5):
     for i in quantiles:
         #i = int/100
-        #err += (np.quantile(data, i) - norm.ppf(i, loc=mu, scale=sigma))**2
-        err += (i - norm.cdf(np.quantile(data, i), mu, sigma))**2
+        err += (np.quantile(data, i) - norm.ppf(i, loc=mu, scale=sigma))**2
+        #err += (i - norm.cdf(np.quantile(data, i), mu, sigma))**2
     return err
 
 
-results_OLS_gauss = minimize(OLS_gauss, [2,10], args = (df.meme_Twitter),bounds = ((None, None), (0, None)),method = 'Powell')
+results_OLS_gauss = minimize(OLS_gauss, [2,10], args = (df.meme_Twitter),bounds = ((None, None), (0.000000001, None)),method = 'Powell')
 mu_est_OLS, sigma_est_OLS = results_OLS_gauss.x
 
 print("Results by handmade ML:")
@@ -181,6 +188,8 @@ print(results_OLS_gauss.x)
 
 #Chi-Squared
 
+meme_Reddit =  df.meme_Reddit
+
 def getLL_chi2(params, data):
     df,loc,scale = params
     #neg_log_lik = -np.sum(np.log(1/(data*sigma*np.sqrt(2*np.pi))) - (((np.log(data)-mu)/m)**2)/(2*sigma**2))
@@ -189,14 +198,15 @@ def getLL_chi2(params, data):
     #print(scale)
     #print(min(x))
 
-    neg_log_lik = -np.sum(-np.log(2**(df/2)) - np.log(scipy.special.gamma(df/2)) + (df/2-1)*np.log(x) - x/2 - np.log(scale))
-    return neg_log_lik
+    #neg_log_lik = -np.sum(-np.log(2**(df/2)) - np.log(scipy.special.gamma(df/2)) + (df/2-1)*np.log(x) - x/2 - np.log(scale))
+    neg__lik = -np.prod(1/(2**(df/2) * scipy.special.gamma(df/2))*x**(df/2-1)*np.exp(-x/2)/scale)
+    return neg__lik
 
-results_ML_chi2 = minimize(getLL_chi2, [0.15,-0.000000003,1000],bounds = ((None, None), (None, None),(1, None)) , args = (df.meme_Reddit))
+results_ML_chi2 = minimize(getLL_chi2, [0,-1,1000],bounds = ((0, 1), (-1, 1),(1000, 1200)) , args = (meme_Reddit),method = 'Powell')
 mu_est_ML, sigma_est_ML, scale = results_ML_chi2.x
 
 #by ML from package
-get_best_distribution(df.meme_Reddit)[2]
+scipy.stats.chi2.fit(meme_Reddit)
 
 #by OLS
 def OLS_chi2(params, data):
@@ -204,20 +214,20 @@ def OLS_chi2(params, data):
     quantiles = [0.15,0.25,0.35,0.45,0.5,0.65,0.75,0.85,0.95]
     #s = np.random.normal(mu, sigma, 1000)
     err = 0
-    for int in range(0,100,5):
+    for int in range(0,100,2):
         i = int/100
         #err += (np.quantile(data, i) - norm.ppf(i, loc=mu, scale=sigma))**2
         err += (i - scipy.stats.chi2.cdf(np.quantile(data, i), s, loc,scale))**2
     return err
 
-results_OLS_chi2 = minimize(OLS_chi2, [1,1,1000], args = (df.meme_Reddit),method = 'Powell')
+results_OLS_chi2 = minimize(OLS_chi2, [0,-1,1000],bounds = ((0, 1), (-1, 1),(1000, 1200)), args = (df.meme_Reddit),method = 'Powell')
 s_est_OLS,loc_est_OLS,scale_est_OLS = results_OLS_chi2.x
 
 
 print("Results by handmade ML:")
 print(results_ML_chi2.x)
 print("Results by package ML:")
-print(get_best_distribution(df.meme_Reddit)[2])
+print(scipy.stats.chi2.fit(meme_Reddit))
 print("Results by handmade OLS:")
 print(results_OLS_chi2.x)
 
@@ -245,11 +255,14 @@ pylab.show()
 # Step 6
 
 #kolmogorov test
-stats.kstest(df.gtrends, np.random.normal(mu_est, sigma_est, 1000)  ,alternative='two-sided', mode='auto')
-
+stats.kstest(df.gtrends, np.random.normal(1, 1, 1000)  ,alternative='two-sided', mode='auto')
+stats.kstest(df.gtrends.tolist(), np.random.normal(0.8758370472673307, 2.5450828743821496, 1000),alternative='two-sided', mode='auto')
 #Chi-Squared
 
 chi2 = scipy.stats.chisquare(df.gtrends)
 
 #Wilcoxon rank-sum
 scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
+
+
+
