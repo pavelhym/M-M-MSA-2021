@@ -22,6 +22,11 @@ df = pd.read_csv("SUPERLAST.csv")
 df = df[["date", "Adj Close",'gtrends','Comments_int','tweet_num','meme_Twitter','meme_Reddit']]
 df = df.rename({'Adj Close': 'Adj_Close'}, axis=1)
 
+Q1 = df.quantile(0.2)
+Q3 = df.quantile(0.8)
+IQR = Q3 - Q1
+df = df[~((df > (Q3 + 0.4 * IQR))).any(axis=1)]
+
 #Step 2
 
 
@@ -251,15 +256,72 @@ plt.legend()
 stats.probplot(df.gtrends, dist="norm", plot=pylab)
 pylab.show()
 
+#make some dict with ppf
+dist_name_to_func_ppf = {
+    "norm" : (lambda i, j : scipy.stats.norm.ppf(i, *j)),
+    "exponnorm" : (lambda i, j: scipy.stats.exponnorm.ppf(i, *j)),
+    "genextreme" : (lambda i, j: scipy.stats.genextreme.ppf(i, *j)),
+    "expon" : (lambda i, j: scipy.stats.expon.ppf(i, *j)),
+    "chi2" : (lambda i, j: scipy.stats.chi2.ppf(i, *j)),
+    "lognorm" : (lambda i, j: scipy.stats.lognorm.ppf(i, *j)),
+    "gamma" : (lambda i, j: scipy.stats.gamma.ppf(i, *j)),
+    "exponweib" : (lambda i, j: scipy.stats.exponweib.ppf(i, *j)),
+    "weibull_max" : (lambda i, j: scipy.stats.weibull_max.ppf(i, *j)),
+    "weibull_min" : (lambda i, j: scipy.stats.weibull_min.ppf(i, *j)),
+    "pareto" : (lambda i, j: scipy.stats.pareto.ppf(i, *j))
+
+}
+
+#graph QQ
+for i in df.columns[1:]:
+    x = np.arange(min(df[str(i)]), max(df[str(i)]), 1)
+    params = parameters(df[str(i)], get_best_distribution(df[str(i)])[0])
+    # Calculation of quantiles
+    percs = np.linspace(0, 100, 101)
+    qn_first = np.percentile(df[str(i)], percs)
+    qn_norm = dist_name_to_func_ppf[get_best_distribution(df[str(i)])[0]](percs/100.0, params)
+    plt.figure(figsize=(10, 10))
+    plt.plot(qn_first, qn_norm, ls="", marker="o", markersize=6)
+    plt.plot(x, x, color="k", ls="--")
+    plt.title(str(i)+ " " + "QQ plot" )
+    plt.xlabel(f'Empirical distribution')
+    plt.ylabel('Theoretical distribution')
+    plt.show()
+
 
 # Step 6
 
 #kolmogorov test
-stats.kstest(df.gtrends, np.random.normal(1, 1, 1000)  ,alternative='two-sided', mode='auto')
-stats.kstest(df.gtrends.tolist(), np.random.normal(0.8758370472673307, 2.5450828743821496, 1000),alternative='two-sided', mode='auto')
+#stats.kstest(df.gtrends, np.random.normal(1, 1, 1000)  ,alternative='two-sided', mode='auto')
+#stats.kstest(df.gtrends.tolist(), np.random.normal(0.8758370472673307, 2.5450828743821496, 1000),alternative='two-sided', mode='auto')
 #Chi-Squared
 
-chi2 = scipy.stats.chisquare(df.gtrends)
+#chi2 = scipy.stats.chisquare(df.gtrends)
+
+#dict with fits of distributions
+dist_name_to_func = {
+    "norm" : (lambda column: scipy.stats.norm.fit(column)),
+    "exponnorm" : (lambda column: scipy.stats.exponnorm.fit(column)),
+    "genextreme" : (lambda column: scipy.stats.genextreme.fit(column)),
+    "expon" : (lambda column: scipy.stats.expon.fit(column)),
+    "chi2" : (lambda column: scipy.stats.chi2.fit(column)),
+    "lognorm" : (lambda column: scipy.stats.lognorm.fit(column)),
+    "gamma" : (lambda column: scipy.stats.gamma.fit(column)),
+    "exponweib" : (lambda column: scipy.stats.exponweib.fit(column)),
+    "weibull_max" : (lambda column: scipy.stats.weibull_max.fit(column)),
+    "weibull_min" : (lambda column: scipy.stats.weibull_min.fit(column)),
+    "pareto" : (lambda column: scipy.stats.pareto.fit(column))
+
+}
+
+#return parameters
+def parameters(column, dist):
+  return dist_name_to_func[dist](column)
+
+#ks test 
+for i in df.columns[1:12]:
+    print(str(i) + "-" + str(scipy.stats.kstest(df[str(i)], get_best_distribution(df[str(i)])[0], parameters(df[str(i)], get_best_distribution(df[str(i)])[0]))))
+    #print(get_best_distribution(df[str(i)])[0])
 
 #Wilcoxon rank-sum
 scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
