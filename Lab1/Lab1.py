@@ -256,6 +256,26 @@ plt.legend()
 stats.probplot(df.gtrends, dist="norm", plot=pylab)
 pylab.show()
 
+#dict with fits of distributions
+dist_name_to_func = {
+    "norm" : (lambda column: scipy.stats.norm.fit(column)),
+    "exponnorm" : (lambda column: scipy.stats.exponnorm.fit(column)),
+    "genextreme" : (lambda column: scipy.stats.genextreme.fit(column)),
+    "expon" : (lambda column: scipy.stats.expon.fit(column)),
+    "chi2" : (lambda column: scipy.stats.chi2.fit(column)),
+    "lognorm" : (lambda column: scipy.stats.lognorm.fit(column)),
+    "gamma" : (lambda column: scipy.stats.gamma.fit(column)),
+    "exponweib" : (lambda column: scipy.stats.exponweib.fit(column)),
+    "weibull_max" : (lambda column: scipy.stats.weibull_max.fit(column)),
+    "weibull_min" : (lambda column: scipy.stats.weibull_min.fit(column)),
+    "pareto" : (lambda column: scipy.stats.pareto.fit(column))
+
+}
+
+#return parameters
+def parameters(column, dist):
+  return dist_name_to_func[dist](column)
+
 #make some dict with ppf
 dist_name_to_func_ppf = {
     "norm" : (lambda i, j : scipy.stats.norm.ppf(i, *j)),
@@ -298,25 +318,7 @@ for i in df.columns[1:]:
 
 #chi2 = scipy.stats.chisquare(df.gtrends)
 
-#dict with fits of distributions
-dist_name_to_func = {
-    "norm" : (lambda column: scipy.stats.norm.fit(column)),
-    "exponnorm" : (lambda column: scipy.stats.exponnorm.fit(column)),
-    "genextreme" : (lambda column: scipy.stats.genextreme.fit(column)),
-    "expon" : (lambda column: scipy.stats.expon.fit(column)),
-    "chi2" : (lambda column: scipy.stats.chi2.fit(column)),
-    "lognorm" : (lambda column: scipy.stats.lognorm.fit(column)),
-    "gamma" : (lambda column: scipy.stats.gamma.fit(column)),
-    "exponweib" : (lambda column: scipy.stats.exponweib.fit(column)),
-    "weibull_max" : (lambda column: scipy.stats.weibull_max.fit(column)),
-    "weibull_min" : (lambda column: scipy.stats.weibull_min.fit(column)),
-    "pareto" : (lambda column: scipy.stats.pareto.fit(column))
 
-}
-
-#return parameters
-def parameters(column, dist):
-  return dist_name_to_func[dist](column)
 
 #ks test 
 for i in df.columns[1:12]:
