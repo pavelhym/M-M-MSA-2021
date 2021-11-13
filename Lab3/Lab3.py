@@ -50,6 +50,13 @@ target = df[[ "Adj_Close", 'Comments_int','tweet_num']]
 predictors = df.drop(columns = [ "date","Adj_Close", 'Comments_int','tweet_num'])
 
 #Step 2
+#inverse sampling
+#here our inverse sampling with expon func
+def inv_samp_exp(loc,s):
+  x = np.random.uniform()
+  return -loc - s*math.log(1-x)
+
+
 #rejection sampling
 
 #make some dict with pdf
