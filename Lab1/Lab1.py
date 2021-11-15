@@ -17,24 +17,59 @@ import scipy
 from scipy import stats
 
 
-df = pd.read_csv("SUPERLAST.csv")
+#df = pd.read_csv("SUPERLAST.csv")
+#
+#df = df[["date", "Adj Close",'gtrends','Comments_int','tweet_num','meme_Twitter','meme_Reddit']]
+#df = df.rename({'Adj Close': 'Adj_Close'}, axis=1)
+#
+#Q1 = df.quantile(0.2)
+#Q3 = df.quantile(0.8)
+#IQR = Q3 - Q1
+#df = df[~((df > (Q3 + 0.4 * IQR))).any(axis=1)]
+ 
 
-df = df[["date", "Adj Close",'gtrends','Comments_int','tweet_num','meme_Twitter','meme_Reddit']]
-df = df.rename({'Adj Close': 'Adj_Close'}, axis=1)
+df = pd.read_excel("AirQualityUCI.xlsx")
 
-Q1 = df.quantile(0.2)
-Q3 = df.quantile(0.8)
-IQR = Q3 - Q1
-df = df[~((df > (Q3 + 0.4 * IQR))).any(axis=1)]
+for i in df.columns[2:]:
+    df[str(i)].replace({-200 : None}, inplace=True)
+    mean = np.mean(df[str(i)])
+    df[str(i)].replace({None : mean}, inplace=True)
+    df[str(i)] = pd.to_numeric(df[str(i)])
+
+
+
+
+df = df.groupby(['Date']).agg({"CO(GT)": "mean",
+        "PT08.S1(CO)" : "mean",
+        "C6H6(GT)" : "mean",
+        'PT08.S2(NMHC)' : 'mean',
+        'NOx(GT)' : 'mean',
+        'PT08.S3(NOx)' : 'mean',
+        'NO2(GT)' : 'mean',
+        'PT08.S4(NO2)' : 'mean',
+        'PT08.S5(O3)' : 'mean',
+        'T' : "mean",
+        "RH" : 'mean',
+        "AH" : "mean"
+        }).reset_index()
+
+
+
 
 #Step 2
+
+for i in df.columns[1:]:
+    print(str(i))
+    x = df[str(i)].tolist()
+    plt.plot(x)
+    plt.show()
 
 
 
 for i in df.columns[1:]:
-    x = df[str(i)]
+    x = df[str(i)].tolist()
     density = kde.gaussian_kde(x)
-    xgrid = np.linspace(x.min(), x.max(), 100)
+    xgrid = np.linspace(min(x), max(x), 100)
     plt.hist(x, bins=8,density=True, stacked=True)
     plt.plot(xgrid, density(xgrid), 'r-')
     plt.title(str(i)+ " " + "histogram" )
@@ -44,15 +79,13 @@ for i in df.columns[1:]:
     
 
 
-
 #Analog
 #sns.distplot(df.gtrends, kde=True, norm_hist=True)
 
 
 #Step 3
 
-plt.boxplot(df.gtrends)
-for i in df.columns[1:12]:
+for i in df.columns[1:]:
     plt.boxplot(df[str(i)])
     plt.title(str(i)+ " " + "boxplot" )
     plt.savefig('Plot_3/' + str(i)+"_boxplot" + '.png')
@@ -60,7 +93,6 @@ for i in df.columns[1:12]:
     plt.show()  
 
 # Step 4
-data = df.gtrends
 
 def get_best_distribution(data):
     #dist_names = ["norm", "exponweib", "weibull_max", "weibull_min", "pareto", "genextreme"]
@@ -90,8 +122,9 @@ def get_best_distribution(data):
     return best_dist, best_p, params[best_dist]
 
 
-for i in df.columns[1:12]:
-    print(str(i) + "-" + get_best_distribution(df[str(i)])[0])
+for i in df.columns[1:]:
+    
+    print(str(i) + "-" + get_best_distribution(df[str(i)].tolist())[0] + " p-value: " + str(get_best_distribution(df[str(i)].tolist())[1]))
     #print(get_best_distribution(df[str(i)])[0])
 
 
@@ -272,6 +305,13 @@ dist_name_to_func_ppf = {
 
 }
 
+
+#return parameters
+def parameters(column, dist):
+  return dist_name_to_func[dist](column)
+
+df['meme_Twitter']
+
 #graph QQ
 for i in df.columns[1:]:
     x = np.arange(min(df[str(i)]), max(df[str(i)]), 1)
@@ -314,9 +354,10 @@ dist_name_to_func = {
 
 }
 
-#return parameters
-def parameters(column, dist):
-  return dist_name_to_func[dist](column)
+
+
+
+i = df.columns[1:12][0]
 
 #ks test 
 for i in df.columns[1:12]:
