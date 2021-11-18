@@ -527,5 +527,13 @@ def get_best_distribution(data):
 get_best_distribution(res_train)
 
 
+#graph of real and predicted values
 
+plt.scatter(date_test, y_test, label = u'The real T')
+plt.scatter(date_test, y_pred, label = u'Predicted by the linear model')
+plt.title(u'Prediction by OLS')
+plt.legend(loc="center right",borderaxespad=0.1, bbox_to_anchor=(1.7, 0.5))
+plt.xlabel(u'date')
+plt.savefig('Plot_7/pred.png')
+plt.ylabel(u'Temperature')
 
