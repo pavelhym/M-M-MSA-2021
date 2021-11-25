@@ -16,6 +16,7 @@ from scipy.stats import kde
 from scipy.stats import gamma
 import scipy
 from scipy import stats
+from scipy.stats import shapiro
 
 
 #df = pd.read_csv("SUPERLAST.csv")
@@ -400,12 +401,16 @@ for i in df.columns[0:]:
     #print(get_best_distribution(df[str(i)])[0])
 
 
-
 #Wilcoxon rank-sum
-scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
+#scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
 
 
-
+def SWtest(data):
+ result = (shapiro(data))
+ return result
+ 
+for i in df.columns[0:]:
+ print(str(i) + "-" + "S-W statistic" + "-" + str(SWtest(df[i])[0])+ "p-value" + "-" + str(SWtest(df[i])[1]))
 
 
 
