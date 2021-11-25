@@ -76,8 +76,9 @@ density = kde(df.iloc[:,2:5])
 
 statsmodels.nonparametric.kernel_density.KDEMultivariate(df,var_type = "cccccc")
 
-
-
+sns.pairplot(df, kind="kde")
+plt.savefig('Plot_1/PDF.png')
+plt.show()
 #Step 2
 #estimation of multivariate mathematical expectation and variance.
 
