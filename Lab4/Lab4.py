@@ -343,13 +343,6 @@ plt.show()
 
 
 
-
-
-
-
-
-
-
 #Step 5 Estimate spectral density function for with and without filtering.
 
 #for T
@@ -384,9 +377,14 @@ plt.savefig('Plot_5/CO_psd.png')
 plt.show()
 
 
+
+
+
+
+
+
+
 #Step 6 Built auto-regression model filtered and non-filtered data. To analyze residual error and to define appropriate order of model.
-
-
 #non-smooth data
 
 train_T, test_T = train_test_data_setup(T_input_data,split_ratio= 0.8)
@@ -419,14 +417,14 @@ pipeline_CO.print_structure()
 
 
 fitted_vals = pipeline.fit(train_T)
-forecast = pipeline.predict(test_T)
+forecast1d = pipeline.predict(test_T)
 
 fitted_vals_CO = pipeline_CO.fit(train_CO)
-forecast_CO = pipeline_CO.predict(test_CO)
+forecast1d_CO = pipeline_CO.predict(test_CO)
 
 
 plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
-plt.plot(forecast.idx, np.ravel(forecast.predict), label='AR forecast')
+plt.plot(forecast1d.idx, np.ravel(forecast1d.predict), label='AR forecast')
 plt.grid()
 plt.legend()
 plt.xlim(250,390)
@@ -437,7 +435,7 @@ plt.show()
 
 
 plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
-plt.plot(forecast_CO.idx, np.ravel(forecast_CO.predict), label='AR forecast')
+plt.plot(forecast1d_CO.idx, np.ravel(forecast1d_CO.predict), label='AR forecast')
 plt.grid()
 plt.legend()
 plt.xlim(250,390)
@@ -454,11 +452,11 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 
 
-MSE_T = mean_squared_error(np.ravel(forecast.predict),test_T.target)
-MAPE_T = mean_absolute_percentage_error(test_T.target, np.ravel(forecast.predict))
+MSE_T = mean_squared_error(np.ravel(forecast1d.predict),test_T.target)
+MAPE_T = mean_absolute_percentage_error(test_T.target, np.ravel(forecast1d.predict))
 
-MSE_CO = mean_squared_error(np.ravel(forecast_CO.predict),test_CO.target)
-MAPE_CO = mean_absolute_percentage_error(test_CO.target, np.ravel(forecast_CO.predict))
+MSE_CO = mean_squared_error(np.ravel(forecast1d_CO.predict),test_CO.target)
+MAPE_CO = mean_absolute_percentage_error(test_CO.target, np.ravel(forecast1d_CO.predict))
 
 print("T_Predict MSE = ", MSE_T)
 print("T_Predict MAPE = ", MAPE_T)
@@ -469,8 +467,11 @@ print("CO_Predict MAPE = ", MAPE_CO)
 
 #smoothed data
 
-T_time_series_sm = np.array(T_smoothed_mw.target)
-CO_time_series_sm = np.array(CO_smoothed_mw.target)
+
+
+
+T_time_series_sm = np.array(T_smoothed_mw.predict)
+CO_time_series_sm = np.array(CO_smoothed_mw.predict)
 
 T_input_data_sm = InputData(idx=np.arange(0, len(T_time_series_sm)),
                        features=T_time_series_sm, target=T_time_series_sm,
@@ -512,14 +513,14 @@ pipeline_CO_sm.print_structure()
 
 
 fitted_vals_sm = pipeline_sm.fit(train_T_sm)
-forecast_sm = pipeline_sm.predict(test_T_sm)
+forecast1d_sm = pipeline_sm.predict(test_T_sm)
 
 fitted_vals_CO_sm = pipeline_CO_sm.fit(train_CO_sm)
-forecast_CO_sm = pipeline_CO_sm.predict(test_CO_sm)
+forecast1d_CO_sm = pipeline_CO_sm.predict(test_CO_sm)
 
 
 plt.plot(T_input_data_sm.idx, T_input_data_sm.target, label='Source time series')
-plt.plot(forecast_sm.idx, np.ravel(forecast_sm.predict), label='AR forecast')
+plt.plot(forecast1d_sm.idx, np.ravel(forecast1d_sm.predict), label='AR forecast')
 plt.grid()
 plt.legend()
 plt.xlim(250,390)
@@ -530,7 +531,7 @@ plt.show()
 
 
 plt.plot(CO_input_data_sm.idx, CO_input_data_sm.target, label='Source time series')
-plt.plot(forecast_CO_sm.idx, np.ravel(forecast_CO_sm.predict), label='AR forecast')
+plt.plot(forecast1d_CO_sm.idx, np.ravel(forecast1d_CO_sm.predict), label='AR forecast')
 plt.grid()
 plt.legend()
 plt.xlim(250,390)
@@ -542,11 +543,11 @@ plt.show()
 
 
 
-MSE_T_sm = mean_squared_error(np.ravel(forecast_sm.predict),test_T_sm.target)
-MAPE_T_sm = mean_absolute_percentage_error(test_T_sm.target, np.ravel(forecast_sm.predict))
+MSE_T_sm = mean_squared_error(np.ravel(forecast1d_sm.predict),test_T_sm.target)
+MAPE_T_sm = mean_absolute_percentage_error(test_T_sm.target, np.ravel(forecast1d_sm.predict))
 
-MSE_CO_sm = mean_squared_error(np.ravel(forecast_CO_sm.predict),test_CO_sm.target)
-MAPE_CO_sm = mean_absolute_percentage_error(test_CO_sm.target, np.ravel(forecast_CO_sm.predict))
+MSE_CO_sm = mean_squared_error(np.ravel(forecast1d_CO_sm.predict),test_CO_sm.target)
+MAPE_CO_sm = mean_absolute_percentage_error(test_CO_sm.target, np.ravel(forecast1d_CO_sm.predict))
 
 print("T_Predict smoothed MSE = ", MSE_T_sm)
 print("T_Predict smoothed MAPE = ", MAPE_T_sm)
@@ -554,65 +555,88 @@ print("T_Predict smoothed MAPE = ", MAPE_T_sm)
 print("CO_Predict smoothed MSE = ", MSE_CO_sm)
 print("CO_Predict smoothed MAPE = ", MAPE_CO_sm)
 
+#both plots
+plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+plt.plot(forecast1d.idx, np.ravel(forecast1d.predict), label='AR forecast')
+plt.plot(forecast1d_sm.idx, np.ravel(forecast1d_sm.predict),c = "red", label='AR smoothed forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("T predictions comparison")
+plt.savefig('Plot_6/T_pred_s+m.png')
+plt.show()
+
+
+plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
+plt.plot(forecast1d_CO.idx, np.ravel(forecast1d_CO.predict), label='AR forecast')
+plt.plot(forecast1d_CO_sm.idx, np.ravel(forecast1d_CO_sm.predict),c = "red", label='AR smoothed forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("CO(GT) predictions comparison")
+plt.savefig('Plot_6/CO_pred_s+m.png')
+plt.show()
+
+
+
 
 
 
 
 #with autoarima 
 
-from pmdarima.arima import auto_arima
+#from pmdarima.arima import auto_arima
+#
+#
+#arima_model =  auto_arima(train_T.target,start_p=0, d=0, start_q=0, 
+#                          max_p=5, max_d=0, max_q=5, start_P=0, 
+#                          D=1, start_Q=0, max_P=5, max_D=5,
+#                          max_Q=5, m=12, seasonal=False, 
+#                          error_action='warn',trace = True,
+#                          supress_warnings=True,stepwise = True,
+#                          random_state=20,n_fits = 50 )
+#
+#
+#prediction = arima_model.predict(n_periods = len(test_T.idx))
+#
+#prediction
+#
+#plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+#plt.plot(forecast.idx, prediction, label='AR forecast')
+#plt.grid()
+#plt.legend()
+#plt.show()
+#
+#
+#
+##smoothed
+#arima_model_sm =  auto_arima(train_sm.target,start_p=0, d=1, start_q=0, 
+#                          max_p=5, max_d=5, max_q=5, start_P=0, 
+#                          D=1, start_Q=0, max_P=5, max_D=5,
+#                          max_Q=5, m=12, seasonal=True, 
+#                          error_action='warn',trace = True,
+#                          supress_warnings=True,stepwise = True,
+#                          random_state=20,n_fits = 50 )
+#
+#
+#prediction_sm = arima_model.predict(n_periods = len(test.idx))
+#
+#prediction_sm
+#
+#plt.plot(input_data_sm.idx, input_data_sm.target, label='Source time series')
+#plt.plot(forecast_sm.idx, prediction_sm, label='AR forecast')
+#plt.grid()
+#plt.legend()
+#plt.show()
+#
+#
 
 
-arima_model =  auto_arima(train_T.target,start_p=0, d=0, start_q=0, 
-                          max_p=5, max_d=0, max_q=5, start_P=0, 
-                          D=1, start_Q=0, max_P=5, max_D=5,
-                          max_Q=5, m=12, seasonal=False, 
-                          error_action='warn',trace = True,
-                          supress_warnings=True,stepwise = True,
-                          random_state=20,n_fits = 50 )
-
-
-prediction = arima_model.predict(n_periods = len(test_T.idx))
-
-prediction
-
-plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
-plt.plot(forecast.idx, prediction, label='AR forecast')
-plt.grid()
-plt.legend()
-plt.show()
-
-
-
-#smoothed
-arima_model_sm =  auto_arima(train_sm.target,start_p=0, d=1, start_q=0, 
-                          max_p=5, max_d=5, max_q=5, start_P=0, 
-                          D=1, start_Q=0, max_P=5, max_D=5,
-                          max_Q=5, m=12, seasonal=True, 
-                          error_action='warn',trace = True,
-                          supress_warnings=True,stepwise = True,
-                          random_state=20,n_fits = 50 )
-
-
-prediction_sm = arima_model.predict(n_periods = len(test.idx))
-
-prediction_sm
-
-plt.plot(input_data_sm.idx, input_data_sm.target, label='Source time series')
-plt.plot(forecast_sm.idx, prediction_sm, label='AR forecast')
-plt.grid()
-plt.legend()
-plt.show()
-
-
-
-
-#Step 7 
+##Step 7 
 
 from fedot.core.data.multi_modal import MultiModalData
-train_diff, test_diff =  train, test = train_test_data_setup(df_diff)
 
-forecast_length = len(test_T.idx)
+forecast_length = 25
 
 # Data preprocessing for FEDOT
 def wrap_into_input(forecast_length, feature_time_series, target_time_series):
@@ -627,14 +651,62 @@ def wrap_into_input(forecast_length, feature_time_series, target_time_series):
     return input_data
 
 
-ts_2 = wrap_into_input(forecast_length=len(test_T.idx), 
-                       feature_time_series=np.array(df['AH']),
-                       target_time_series=np.array(df["T"]))
+#For all columns
+
+
+for col_name in df_diff.columns:
+    print(col_name)     
+
+
+ts_T = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['T']),
+                       target_time_series=np.array(df_diff["T"]))
+
+ts_T_sm = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(T_smoothed_mw.predict),
+                       target_time_series=np.array(T_smoothed_mw.predict))
+
+ts_AH = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['AH']),
+                       target_time_series=np.array(df_diff["T"]))
+
+
+ts_C6H6 = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['C6H6(GT)']),
+                       target_time_series=np.array(df_diff["T"]))
+
+ts_PT08 = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['PT08.S5(O3)']),
+                       target_time_series=np.array(df_diff["T"]))
+
+
+ts_NO2 = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['NO2(GT)']),
+                       target_time_series=np.array(df_diff["T"]))
+
+
+ts_CO = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(df_diff['CO(GT)']),
+                       target_time_series=np.array(df_diff["CO(GT)"]))
+
+ts_CO_sm = wrap_into_input(forecast_length=forecast_length, 
+                       feature_time_series=np.array(CO_smoothed_mw.predict),
+                       target_time_series=np.array(CO_smoothed_mw.predict))
+
+
 
 dataset = MultiModalData({
-    'data_source_ts/T': df['T'],
-    'data_source_ts/AH': df['AH']
+    'data_source_ts/T': ts_T,
+    'data_source_ts/T_sm': ts_T_sm,
+    'data_source_ts/AH': ts_AH,
+    'data_source_ts/C6H6' : ts_C6H6,
+    'data_source_ts/PT08' : ts_PT08,
+    'data_source_ts/CO(GT)' : ts_CO,
+    'data_source_ts/CO(GT)_sm' : ts_CO_sm
 })
+
+train, test = train_test_data_setup(dataset)
+
 
 
 
@@ -642,15 +714,23 @@ def create_multisource_pipeline():
     """ Generate pipeline with several data sources """
     node_source_1 = PrimaryNode('data_source_ts/T')
     node_source_2 = PrimaryNode('data_source_ts/AH')
+    node_source_3 = PrimaryNode('data_source_ts/C6H6')
+    node_source_4 = PrimaryNode('data_source_ts/PT08')
 
     node_lagged_1 = SecondaryNode('lagged', nodes_from=[node_source_1])
-    node_lagged_1.custom_params = {'window_size': 150}
+    node_lagged_1.custom_params = {'window_size': 20}
     node_lagged_2 = SecondaryNode('lagged', nodes_from=[node_source_2])
-      
+    
+    node_lagged_3 = SecondaryNode('lagged', nodes_from=[node_source_3])
+    node_lagged_4 = SecondaryNode('lagged', nodes_from=[node_source_4])
+
     node_ridge = SecondaryNode('ridge', nodes_from=[node_lagged_1])
     node_lasso = SecondaryNode('lasso', nodes_from=[node_lagged_2])
+
+    node_ridge3 = SecondaryNode('ridge', nodes_from=[node_lagged_3])
+    node_lasso4 = SecondaryNode('lasso', nodes_from=[node_lagged_4])  
     
-    node_final = SecondaryNode('linear', nodes_from=[node_ridge, node_lasso])
+    node_final = SecondaryNode('linear', nodes_from=[node_ridge, node_lasso,node_ridge3,node_lasso4])
     pipeline = Pipeline(node_final)
     return pipeline
 
@@ -658,15 +738,234 @@ pipeline = create_multisource_pipeline()
 pipeline.show()
 
 
-pipeline.fit(train_diff)
-forecast = pipeline.predict(test_diff)
+pipeline.fit(train)
+forecast = pipeline.predict(test)
 
-train_length = len(df['Adj_Close']) - forecast_length
+train_length = len(df_diff) - forecast_length
 
-plt.plot(df['Adj_Close'], label='Actual time series')
+plt.plot(ts_T.idx,ts_T.features, label='Actual time series')
 plt.plot(np.arange(train_length, train_length + forecast_length), 
          np.ravel(forecast.predict), label='Forecast')
-plt.xlim(train_length - 100, len(df['Adj_Close']) + 10)
+#plt.xlim(train_length - 100, len(df_diff['Adj_Close']) + 10)
 plt.legend()
 plt.grid()
+plt.xlim(250,390)
+plt.title("T multidata predictions")
+plt.savefig('Plot_7/T_mult.png')
+plt.show()
+
+
+#Quality
+
+
+
+MSE_T_multi = mean_squared_error(np.ravel(forecast.predict),test_T.target)
+MAPE_T_multi = mean_absolute_percentage_error(test_T.target, np.ravel(forecast.predict))
+
+
+print("T_Predict multi MSE = ", MSE_T_multi)
+print("T_Predict multi MAPE = ", MAPE_T_multi)
+
+
+
+#FOR CO
+
+
+def create_multisource_pipeline_CO():
+    """ Generate pipeline with several data sources """
+    node_source_1 = PrimaryNode('data_source_ts/CO(GT)')
+    node_source_2 = PrimaryNode('data_source_ts/AH')
+    node_source_3 = PrimaryNode('data_source_ts/C6H6')
+    node_source_4 = PrimaryNode('data_source_ts/PT08')
+
+    node_lagged_1 = SecondaryNode('lagged', nodes_from=[node_source_1])
+    node_lagged_1.custom_params = {'window_size': 20}
+    node_lagged_2 = SecondaryNode('lagged', nodes_from=[node_source_2])
+    node_lagged_1.custom_params = {'window_size': 3}
+    node_lagged_3 = SecondaryNode('lagged', nodes_from=[node_source_3])
+    node_lagged_4 = SecondaryNode('lagged', nodes_from=[node_source_4])
+
+    node_ridge = SecondaryNode('lasso', nodes_from=[node_lagged_1])
+    node_lasso = SecondaryNode('lasso', nodes_from=[node_lagged_2])
+
+    #node_ridge3 = SecondaryNode('lasso', nodes_from=[node_lagged_3])
+    #node_lasso4 = SecondaryNode('lasso', nodes_from=[node_lagged_4])  
+    
+    node_final = SecondaryNode('linear', nodes_from=[node_lagged_1,node_lagged_2 ])
+    pipeline = Pipeline(node_final)
+    return pipeline
+
+
+pipeline_CO = create_multisource_pipeline_CO()
+pipeline_CO.show()
+
+
+pipeline_CO.fit(train)
+forecast_CO = pipeline_CO.predict(test)
+
+train_length = len(df_diff) - forecast_length
+
+plt.plot(ts_CO.idx,ts_CO.features, label='Actual time series')
+plt.plot(np.arange(train_length, train_length + forecast_length), 
+         np.ravel(forecast_CO.predict), label='Forecast')
+#plt.xlim(train_length - 100, len(df_diff['Adj_Close']) + 10)
+plt.legend()
+plt.grid()
+plt.xlim(250,390)
+plt.title("CO multidata predictions")
+plt.savefig('Plot_7/CO_mult.png')
+plt.show()
+
+
+
+MSE_CO_multi = mean_squared_error(np.ravel(forecast_CO.predict),test_CO.target)
+MAPE_CO_multi = mean_absolute_percentage_error(test_CO.target, np.ravel(forecast_CO.predict))
+
+
+print("CO_Predict multi MSE = ", MSE_CO_multi)
+print("CO_Predict multi MAPE = ", MAPE_CO_multi)
+
+
+
+
+#For Smoothed data 
+
+
+def create_multisource_pipeline_sm():
+    """ Generate pipeline with several data sources """
+    node_source_1 = PrimaryNode('data_source_ts/T_sm')
+    node_source_2 = PrimaryNode('data_source_ts/AH')
+    node_source_3 = PrimaryNode('data_source_ts/C6H6')
+    node_source_4 = PrimaryNode('data_source_ts/PT08')
+
+    node_lagged_1 = SecondaryNode('lagged', nodes_from=[node_source_1])
+    node_lagged_1.custom_params = {'window_size': 20}
+    node_lagged_2 = SecondaryNode('lagged', nodes_from=[node_source_2])
+    node_lagged_2.custom_params = {'window_size': 10}
+
+    node_lagged_3 = SecondaryNode('lagged', nodes_from=[node_source_3])
+    node_lagged_3.custom_params = {'window_size': 10}
+    node_lagged_4 = SecondaryNode('lagged', nodes_from=[node_source_4])
+    node_lagged_4.custom_params = {'window_size': 10}
+
+    node_ridge = SecondaryNode('lasso', nodes_from=[node_lagged_1])
+    node_lasso = SecondaryNode('lasso', nodes_from=[node_lagged_2])
+
+    node_ridge3 = SecondaryNode('lasso', nodes_from=[node_lagged_3])
+    node_lasso4 = SecondaryNode('lasso', nodes_from=[node_lagged_4])  
+    
+    node_final = SecondaryNode('linear', nodes_from=[node_ridge, node_lasso,node_ridge3,node_lasso4])
+    pipeline = Pipeline(node_final)
+    return pipeline
+
+pipeline_sm = create_multisource_pipeline_sm()
+pipeline_sm.show()
+
+
+pipeline_sm.fit(train)
+forecast_sm = pipeline_sm.predict(test)
+
+train_length = len(df_diff) - forecast_length
+
+plt.plot(ts_T_sm.idx,ts_T_sm.features, label='Actual time series')
+plt.plot(np.arange(train_length, train_length + forecast_length), 
+         np.ravel(forecast_sm.predict), label='Forecast')
+#plt.xlim(train_length - 100, len(df_diff['Adj_Close']) + 10)
+plt.legend()
+plt.grid()
+plt.xlim(250,390)
+plt.title("T multidata smoothed predictions")
+plt.savefig('Plot_7/T_mult_sm.png')
+plt.show()
+
+
+#Quality
+
+
+
+MSE_T_multi_sm = mean_squared_error(np.ravel(forecast_sm.predict),test_T_sm.target)
+MAPE_T_multi_sm = mean_absolute_percentage_error(test_T_sm.target, np.ravel(forecast_sm.predict))
+print("T_Predict smoothed multi MSE = ", MSE_T_multi_sm)
+print("T_Predict smoothed multi MAPE = ", MAPE_T_multi_sm)
+
+
+#For CO_sm
+
+def create_multisource_pipeline_CO_sm():
+    """ Generate pipeline with several data sources """
+    node_source_1 = PrimaryNode('data_source_ts/CO(GT)_sm')
+    node_source_2 = PrimaryNode('data_source_ts/AH')
+    node_source_3 = PrimaryNode('data_source_ts/C6H6')
+    node_source_4 = PrimaryNode('data_source_ts/PT08')
+
+    node_lagged_1 = SecondaryNode('lagged', nodes_from=[node_source_1])
+    node_lagged_1.custom_params = {'window_size': 10}
+    node_lagged_2 = SecondaryNode('lagged', nodes_from=[node_source_2])
+    node_lagged_2.custom_params = {'window_size': 1}
+    node_lagged_3 = SecondaryNode('lagged', nodes_from=[node_source_3])
+    node_lagged_4 = SecondaryNode('lagged', nodes_from=[node_source_4])
+
+    node_ridge = SecondaryNode('lasso', nodes_from=[node_lagged_1])
+    node_lasso = SecondaryNode('lasso', nodes_from=[node_lagged_2])
+
+    #node_ridge3 = SecondaryNode('lasso', nodes_from=[node_lagged_3])
+    #node_lasso4 = SecondaryNode('lasso', nodes_from=[node_lagged_4])  
+    
+    node_final = SecondaryNode('linear', nodes_from=[node_lagged_1,node_lagged_2 ])
+    pipeline = Pipeline(node_final)
+    return pipeline
+
+
+pipeline_CO_sm = create_multisource_pipeline_CO_sm()
+pipeline_CO_sm.show()
+
+
+pipeline_CO_sm.fit(train)
+forecast_CO_sm = pipeline_CO_sm.predict(test)
+
+train_length = len(df_diff) - forecast_length
+
+plt.plot(ts_CO_sm.idx,ts_CO_sm.features, label='Actual time series')
+plt.plot(np.arange(train_length, train_length + forecast_length), 
+         np.ravel(forecast_CO_sm.predict), label='Forecast')
+#plt.xlim(train_length - 100, len(df_diff['Adj_Close']) + 10)
+plt.legend()
+plt.grid()
+plt.xlim(250,390)
+plt.title("CO multidata smoothed predictions")
+plt.savefig('Plot_7/CO_mult_sm.png')
+plt.show()
+
+
+
+MSE_CO_multi_sm = mean_squared_error(np.ravel(forecast_CO_sm.predict),test_CO_sm.target)
+MAPE_CO_multi_sm = mean_absolute_percentage_error(test_CO_sm.target, np.ravel(forecast_CO_sm.predict))
+
+
+print("CO_Predict smoothed multi MSE = ", MSE_CO_multi_sm)
+print("CO_Predict smoothed multi MAPE = ", MAPE_CO_multi_sm)
+
+
+
+plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+plt.plot(forecast1d.idx, np.ravel(forecast1d.predict), label='AR forecast')
+plt.plot(np.arange(train_length, train_length + forecast_length), 
+         np.ravel(forecast.predict), label='Forecast Multi')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("T predictions comparison")
+plt.savefig('Plot_7/T_pred_1d+mult.png')
+plt.show()
+
+
+plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
+plt.plot(forecast1d_CO.idx, np.ravel(forecast1d_CO.predict), label='AR forecast')
+plt.plot(np.arange(train_length, train_length + forecast_length), 
+         np.ravel(forecast_CO.predict), label='Forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("CO(GT) predictions comparison")
+plt.savefig('Plot_7/CO_pred_1d+mult.png')
 plt.show()
