@@ -65,14 +65,13 @@ df = df.groupby(['Date']).agg({"CO(GT)": "mean",
 
 date = df['Date']
 
-df = df[["T", "RH", "AH", "PT08.S5(O3)","CO(GT)", "NO2(GT)" ]]
+df = df[["T", "C6H6(GT)", "AH", "PT08.S5(O3)","CO(GT)", "NO2(GT)" ]]
 
 
 #Step 1
 #MRV KDE
 
-kde = stats.gaussian_kde(df.iloc[:,2:5])
-density = kde(df.iloc[:,2:5])
+
 
 statsmodels.nonparametric.kernel_density.KDEMultivariate(df,var_type = "cccccc")
 
@@ -122,7 +121,6 @@ for i in df.columns[0:]:
 
 
 
-round(2.45,1)
 #cond_mean
 
 round(df_dum[df_dum["AH_dummy"]==1].apply(np.mean),2)
@@ -148,7 +146,6 @@ def pearsonr_ci(x,y,alpha=0.05):
     lo, hi = np.tanh((lo_z, hi_z))
     return r, p, lo, hi
 
-pearsonr_ci(df['Adj_Close'], df['gtrends'], alpha = 0.1)
 
 
 
@@ -171,14 +168,7 @@ for i in df.columns:
 
 
 #Step 5
-#multivar corr?!?!?
-for i in df.columns[2:]:
-    x = df[str(i)]
-    
-    corr = pearsonr_ci(df['Adj_Close'], x, alpha = 0.1)
-    print('Corr of  Adj_Close and ' + str(i)+" is "+ str(round(corr[0],4)) + " lb-ub " + str(round(corr[2],4)) +"-"+ str(round(corr[3],4)) + " p-value= " + str(round(corr[1],4)))
-     
-
+#multivar corr
 
 
 
@@ -190,7 +180,7 @@ from statsmodels.formula.api import ols
 import pyperclip as pc
 
 df.columns.tolist()
-df.columns = ['T', 'RH', 'AH', 'PT08_S5', 'CO_GT', 'NO2_GT']
+df.columns = ['T', "C6H6", 'AH', 'PT08_S5', 'CO_GT', 'NO2_GT']
 #Data preparation
 X = df.iloc[:,1:]
 # Allocate the target variable
@@ -207,7 +197,7 @@ df_train , df_test =  train_test_split(df, test_size=0.33, random_state=42)
 
 
 #OLS MODEL with nice summary
-ols_ws = ols('T ~ RH + AH + PT08_S5 + CO_GT + NO2_GT  ', data=df_train).fit()
+ols_ws = ols('T ~ C6H6 + AH + PT08_S5 + CO_GT + NO2_GT  ', data=df_train).fit()
 
 pc.copy(ols_ws.summary().as_latex())
 
@@ -248,7 +238,7 @@ print('MAPE train = ', mape_ols_train)
 
 
 #Lasso regularization
-clf = linear_model.Lasso(alpha=0.1)
+clf = linear_model.Lasso(alpha=0.05)
 clf.fit(X_train, y_train)
 
 y_pred_lasso = clf.predict(X_test)
@@ -313,7 +303,7 @@ print('MAPE with aic lasso train = ', mape_lasso_aic_train)
 #graph of real and predicted values
 
 plt.scatter(date_test, y_test, label = u'The real T')
-plt.scatter(date_test, y_pred, label = u'Predicted by the linear model')
+plt.scatter(date_test, y_pred_lasso_aic, label = u'Predicted by Lasso AIC')
 plt.title(u'Prediction')
 plt.legend(loc="center right",borderaxespad=0.1, bbox_to_anchor=(1.7, 0.5))
 plt.xlabel(u'date')
@@ -351,7 +341,7 @@ print(vif_data)
 #values are too correlated
 
 #smaller OLS
-ols_ws_small = ols('T ~ RH + AH + NO2_GT  ', data=df_train).fit()
+ols_ws_small = ols('T ~ AH + NO2_GT  ', data=df_train).fit()
 
 pc.copy(ols_ws_small.summary().as_latex())
 
@@ -449,7 +439,6 @@ def AIC(y_true, y_pred, k):
     AIC = 2*k + n*np.log(RSS)
     return AIC
 
-AIC(y_train, y_pred_train, 5)
 
 print("R2 OLS lasso = ", sklearn.metrics.r2_score(y_train, y_pred_lasso_train))
 print("AIC lasso = ", AIC(y_train, y_pred_lasso_train, 5))
@@ -527,6 +516,7 @@ def get_best_distribution(data):
 #They are almost norm!
 get_best_distribution(res_train)
 
+get_best_distribution(res_test)
 
 #graph of real and predicted values
 
