@@ -402,8 +402,14 @@ for i in df.columns[0:]:
 
 
 #Wilcoxon rank-sum
-#scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
+scipy.stats.ranksums(df.gtrends, np.random.normal(13, 12, 1000))
 
+def SWtest(data):
+  result = (shapiro(data))
+  return result
+ 
+ for i in df.columns[0:]:
+    print(str(i) + "-" + "S-W statistic" + "-" + str(SWtest(df[i])[0])+ "p-value" + "-" + str(SWtest(df[i])[1]))
 
 def SWtest(data):
  result = (shapiro(data))
