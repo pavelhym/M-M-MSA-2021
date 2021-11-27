@@ -357,6 +357,20 @@ plt.legend()
 plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD ')
 plt.title("T spectral density")
+#plt.savefig('Plot_5/T_psd.png')
+plt.show()
+
+
+b_f, b_Pxx_den = signal.welch(target["T"], fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+f, Pxx_den = signal.welch(T_smoothed_mw.predict, fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+f_gauss, Pxx_den_gauss = signal.welch(T_smoothed_gaussian.predict, fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+
+plt.plot(1/b_f, b_Pxx_den, label = 'Raw data')
+plt.plot(1/f, Pxx_den, label = 'Mooving window')
+plt.plot(1/f_gauss, Pxx_den_gauss, label = 'Gaussian')
+plt.legend()
+plt.xlim(0,20)
+plt.title("T spectral density")
 plt.savefig('Plot_5/T_psd.png')
 plt.show()
 
@@ -373,9 +387,22 @@ plt.legend()
 plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD ')
 plt.title("CO(GT) spectral density")
-plt.savefig('Plot_5/CO_psd.png')
+#plt.savefig('Plot_5/CO_psd.png')
 plt.show()
 
+
+b_f_CO, b_Pxx_den_CO = signal.welch(target["CO(GT)"], fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+f_CO, Pxx_den_CO = signal.welch(CO_smoothed_mw.predict, fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+f_gauss_CO, Pxx_den_gauss_CO = signal.welch(CO_smoothed_gaussian.predict, fs=1, scaling='spectrum', nfft = 1000, nperseg=100)
+
+plt.plot(1/b_f_CO, b_Pxx_den_CO, label = 'Raw data')
+plt.plot(1/f_CO, Pxx_den_CO, label = 'Mooving window')
+plt.plot(1/f_gauss_CO, Pxx_den_gauss_CO, label = 'Gaussian')
+plt.legend()
+plt.xlim(0,20)
+plt.title("CO(GT) spectral density")
+plt.savefig('Plot_5/CO_psd.png')
+plt.show()
 
 
 
