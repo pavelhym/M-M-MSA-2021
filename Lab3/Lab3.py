@@ -280,6 +280,11 @@ HC_mi = structure_learning(discrete_data, 'HC', nodes_type, 'MI')
 draw_BN(HC_mi, nodes_type, 'MI_bn')
 
 
+#Evo algor MI
+mi_evo = structure_learning(discrete_data, 'evo', nodes_type, 'MI')
+
+draw_BN(mi_evo, nodes_type, 'mi_evo')
+
 params_manual = parameter_learning(df, nodes_type, bayes_manual, 'simple')
 save_structure(bayes_manual, 'bayes_manual')
 skel = read_structure('bayes_manual')
@@ -371,6 +376,36 @@ axs[2].legend(['Real data', 'Synthetic data'])
 axs[2].set_title('RH')
 plt.show()
 
+params_evo = parameter_learning(df, nodes_type, mi_evo, 'simple')
+save_structure(mi_evo, 'bayes_evo_mi')
+skel = read_structure('bayes_evo_mi')
+save_params(params_evo, 'bayes_evo_mi_params')
+params_evo = read_params('bayes_evo_mi_params')
+mi_evo = HyBayesianNetwork(skel, params_evo)
+
+syn_df_mi_evo = generate_synthetics(mi_evo, nodes_sign, 'simple', 800)
+
+
+figure, axs = plt.subplots(3, 1, figsize=(20, 20))
+
+
+#targets
+sns.histplot(df['T'], ax=axs[0], kde=True)
+sns.histplot(syn_df_mi_evo['T'], ax=axs[0], color='purple', kde=True)
+axs[0].legend(['Real data', 'Synthetic data'])
+axs[0].set_title('T')
+
+sns.histplot(df['AH'], ax=axs[1], kde=True)
+sns.histplot(syn_df_mi_evo['AH'], ax=axs[1],  color='purple', kde=True)
+axs[1].legend(['Real data', 'Synthetic data'])
+axs[1].set_title('AH')
+
+sns.histplot(df['RH'], ax=axs[2], kde=True)
+sns.histplot(syn_df_mi_evo['RH'], ax=axs[2],  color='purple', kde=True)
+axs[2].legend(['Real data', 'Synthetic data'])
+axs[2].set_title('RH')
+plt.show()
+
 
 accuracy_dict, rmse_dict, real_param, pred_param, indexes = calculate_acc(bayes_manual, df, ['T', "AH", "RH"], 'simple')
 print("acc_manual")
@@ -402,4 +437,12 @@ print(real_param)
 print("predicted_HC_mi")
 print(pred_param)
 
-
+accuracy_dict, rmse_dict, real_param, pred_param, indexes = calculate_acc(mi_evo, df, ['T', 'AH', 'RH'], 'simple')
+print("acc_mi_evo")
+print(accuracy_dict)
+print("rmse_mi_evo")
+print(rmse_dict)
+print("real_mi_evo")
+print(real_param)
+print("predicted_mi_evo")
+print(pred_param)
