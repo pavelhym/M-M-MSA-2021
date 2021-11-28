@@ -106,9 +106,9 @@ predictors = df.drop(columns = [ "T", 'RH','AH'])
 #inverse transform sampling
 
 def inverse_transform_sampling(n, distribution, params):
-  unif=np.random.uniform(size=n)
-  rv=distribution(*params)
-  return rv.ppf(unif) 
+  uniform_dist=np.random.uniform(size=n)
+  gd=distribution(*params)
+  return gd.ppf(uniform_dist) 
 
 param = []
 for i in target:
