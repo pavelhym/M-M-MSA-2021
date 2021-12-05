@@ -101,7 +101,7 @@ for i in df.columns[0:]:
 #Step 3
 
 for i in df.columns[0:]:
-    plt.boxplot(df[str(i)])
+    plt.boxplot(df[str(i)], whis = 2)
     plt.title(str(i)+ " " + "boxplot" )
     plt.savefig('Plot_3/' + str(i)+"_boxplot" + '.png')
     print('Plot_3/' + str(i)+"_boxplot" + '.png')
