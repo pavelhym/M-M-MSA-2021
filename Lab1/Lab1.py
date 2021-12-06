@@ -99,13 +99,18 @@ for i in df.columns[0:]:
 
 
 #Step 3
+plt.boxplot(df['PT08.S5(O3)'], whis = 2)
+plt.title("PT08.S5(O3) boxplot" )
+plt.savefig('Plot_3/' + str(i)+"_boxplot" + '.png')
+print('Plot_3/' + str(i)+"_boxplot" + '.png')
+plt.show()  
 
-for i in df.columns[0:]:
-    plt.boxplot(df[str(i)], whis = 2)
+for i in df.columns[1:]:
+    plt.boxplot(df[str(i)])
     plt.title(str(i)+ " " + "boxplot" )
     plt.savefig('Plot_3/' + str(i)+"_boxplot" + '.png')
     print('Plot_3/' + str(i)+"_boxplot" + '.png')
-    plt.show()  
+    plt.show()   
 
 # Step 4
 
