@@ -62,6 +62,10 @@ target = df[[ "T", "CO(GT)"]]
 predictors = df.drop(columns = [ "T", "CO(GT)"])
 
 
+target_init = df[[ "T", "CO(GT)"]]
+predictors_init = df.drop(columns = [ "T", "CO(GT)"])
+
+
 
 
 
@@ -419,6 +423,7 @@ train_CO, test_CO = train_test_data_setup(CO_input_data,split_ratio= 0.8)
 len(train_CO.idx) 
 len(test_CO.idx) 
 
+len(train_CO.idx) / (len(train_CO.idx) + len(test_CO.idx)) == 0.8
 
 
 pipeline = Pipeline(PrimaryNode('ar'))
@@ -605,6 +610,306 @@ plt.savefig('Plot_6/CO_pred_s+m.png')
 plt.show()
 
 
+#STL forecast 
+from statsmodels.tsa.api import STLForecast
+from statsmodels.tsa.arima.model import ARIMA
+
+from statsmodels.datasets import macrodata
+
+
+
+T_stl_train = df_diff["T"][0:365]
+T_stl_test = df_diff["T"][365:]
+
+
+stlf = STLForecast(T_stl_train, ARIMA, model_kwargs={"order": (2, 0, 0)})
+res = stlf.fit()
+forecasts = res.forecast(25)
+
+plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+plt.plot(forecast1d.idx, forecasts, label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("STLForecast of T") 
+plt.savefig('Plot_6/STL_T.png')
+plt.show()
+
+
+MSE_T_stlf = mean_squared_error(forecasts,df_diff["T"][365:])
+MAPE_T_stlf = mean_absolute_percentage_error(df_diff["T"][365:], forecasts)
+print("T_Predict  STLF MSE = ", MSE_T_stlf)
+print("T_Predict STLF MAPE = ", MAPE_T_stlf)
+
+
+
+
+
+CO_stl_train = df_diff["CO(GT)"][0:365]
+CO_stl_test = df_diff["CO(GT)"][365:]
+
+stlf_CO = STLForecast(CO_stl_train, ARIMA, model_kwargs={"order": (2, 0, 0)})
+res_CO = stlf_CO.fit()
+forecasts_CO = res_CO.forecast(25)
+
+plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
+plt.plot(forecast1d.idx, forecasts_CO, label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("STLForecast of CO") 
+plt.savefig('Plot_6/STL_CO.png')
+plt.show()
+
+
+MSE_CO_stlf = mean_squared_error(forecasts_CO,df_diff["CO(GT)"][365:])
+MAPE_CO_stlf = mean_absolute_percentage_error(df_diff["CO(GT)"][365:], forecasts_CO)
+print("CO_Predict  STLF MSE = ", MSE_CO_stlf)
+print("CO_Predict STLF MAPE = ", MAPE_CO_stlf)
+
+
+#Log Tranform
+
+min(target_init["T"])
+
+# Convert into numpy array first
+T_time_series = np.array((np.log(target["T"] +10 )))
+CO_time_series = np.array((np.log(target["CO(GT)"]+ 5)))
+
+# Define task - time series forecasting
+# and forecast horizon 
+task = Task(TaskTypesEnum.ts_forecasting,
+                TsForecastingParams(forecast_length=25))
+
+T_input_data = InputData(idx=np.arange(0, len(T_time_series)),
+                       features=T_time_series, target=T_time_series,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+CO_input_data = InputData(idx=np.arange(0, len(CO_time_series)),
+                       features=CO_time_series, target=CO_time_series,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+
+
+train_T, test_T = train_test_data_setup(T_input_data,split_ratio= 0.8)
+train_CO, test_CO = train_test_data_setup(CO_input_data,split_ratio= 0.8)
+len(train_CO.idx) 
+len(test_CO.idx) 
+
+len(train_CO.idx) / (len(train_CO.idx) + len(test_CO.idx)) == 0.8
+
+
+pipeline = Pipeline(PrimaryNode('ar'))
+pipeline = pipeline.fine_tune_all_nodes(loss_function=mean_absolute_error,
+                                        loss_params=None, input_data=train_T,
+                                        iterations=500, timeout=5,
+                                        cv_folds=3, validation_blocks=2)
+
+#parameters
+pipeline.print_structure()
+
+
+pipeline_CO = Pipeline(PrimaryNode('ar'))
+pipeline_CO = pipeline_CO.fine_tune_all_nodes(loss_function=mean_absolute_error,
+                                        loss_params=None, input_data=train_CO,
+                                        iterations=500, timeout=5,
+                                        cv_folds=3, validation_blocks=2)
+
+
+#parameters
+pipeline_CO.print_structure()
+
+
+
+fitted_vals = pipeline.fit(train_T)
+forecast1d = pipeline.predict(test_T)
+
+fitted_vals_CO = pipeline_CO.fit(train_CO)
+forecast1d_CO = pipeline_CO.predict(test_CO)
+
+
+plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+plt.plot(forecast1d.idx, np.ravel(forecast1d.predict), label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("T log prediction")
+plt.savefig('Plot_6/T_pred_log.png')
+plt.show()
+
+
+
+plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
+plt.plot(forecast1d_CO.idx, np.ravel(forecast1d_CO.predict), label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("CO(GT) log prediction")
+plt.savefig('Plot_6/CO_pred_log.png')
+plt.show()
+
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+
+
+MSE_T = mean_squared_error(np.ravel(forecast1d.predict),test_T.target)
+MAPE_T = mean_absolute_percentage_error(test_T.target, np.ravel(forecast1d.predict))
+
+MSE_CO = mean_squared_error(np.ravel(forecast1d_CO.predict),test_CO.target)
+MAPE_CO = mean_absolute_percentage_error(test_CO.target, np.ravel(forecast1d_CO.predict))
+
+print("T_Predict log MSE = ", MSE_T)
+print("T_Predict log MAPE = ", MAPE_T)
+
+print("CO_Predict log MSE = ", MSE_CO)
+print("CO_Predict log MAPE = ", MAPE_CO)
+
+
+
+# Convert into numpy array first
+T_time_series = np.array((np.log(target["T"] +10 )))
+CO_time_series = np.array((np.log(target["CO(GT)"]+ 5)))
+
+# Define task - time series forecasting
+# and forecast horizon 
+task = Task(TaskTypesEnum.ts_forecasting,
+                TsForecastingParams(forecast_length=25))
+
+T_input_data = InputData(idx=np.arange(0, len(T_time_series)),
+                       features=T_time_series, target=T_time_series,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+CO_input_data = InputData(idx=np.arange(0, len(CO_time_series)),
+                       features=CO_time_series, target=CO_time_series,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+
+
+#moving window
+
+smoothing_node = PrimaryNode('smoothing') 
+smoothing_node.custom_params = {'window_size': 5}
+
+def node_fit_predict(node, input_data):
+    """ Fit node and make prediction """
+    node.fit(input_data)
+    smoothed_output = node.predict(input_data)
+    return smoothed_output
+
+T_smoothed_mw = node_fit_predict(smoothing_node, T_input_data)
+CO_smoothed_mw = node_fit_predict(smoothing_node, CO_input_data)
+
+plt.plot(T_input_data.idx, T_input_data.target, label='Source time series')
+plt.plot(T_smoothed_mw.idx, T_smoothed_mw.predict, label='Smoothed by 3 elements', linewidth=3)
+plt.legend()
+plt.show()
+
+plt.plot(CO_input_data.idx, CO_input_data.target, label='Source time series')
+plt.plot(CO_smoothed_mw.idx, CO_smoothed_mw.predict, label='Smoothed by 3 elements', linewidth=3)
+plt.legend()
+plt.show()
+
+
+
+T_time_series_sm = np.array(T_smoothed_mw.predict)
+CO_time_series_sm = np.array(CO_smoothed_mw.predict)
+
+T_input_data_sm = InputData(idx=np.arange(0, len(T_time_series_sm)),
+                       features=T_time_series_sm, target=T_time_series_sm,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+CO_input_data_sm = InputData(idx=np.arange(0, len(CO_time_series_sm)),
+                       features=CO_time_series_sm, target=CO_time_series_sm,
+                       task=task, data_type=DataTypesEnum.ts)
+
+
+
+train_T_sm, test_T_sm = train_test_data_setup(T_input_data_sm,split_ratio= 0.8)
+train_CO_sm, test_CO_sm = train_test_data_setup(CO_input_data_sm,split_ratio= 0.8)
+
+
+
+
+pipeline_sm = Pipeline(PrimaryNode('ar'))
+pipeline_sm = pipeline_sm.fine_tune_all_nodes(loss_function=mean_absolute_error,
+                                        loss_params=None, input_data=train_T_sm,
+                                        iterations=500, timeout=5,
+                                        cv_folds=3, validation_blocks=2)
+
+#parameters
+pipeline_sm.print_structure()
+
+
+pipeline_CO_sm = Pipeline(PrimaryNode('ar'))
+pipeline_CO_sm = pipeline_CO_sm.fine_tune_all_nodes(loss_function=mean_absolute_error,
+                                        loss_params=None, input_data=train_CO_sm,
+                                        iterations=500, timeout=5,
+                                        cv_folds=3, validation_blocks=2)
+
+
+#parameters
+pipeline_CO_sm.print_structure()
+
+
+
+fitted_vals_sm = pipeline_sm.fit(train_T_sm)
+forecast1d_sm = pipeline_sm.predict(test_T_sm)
+
+fitted_vals_CO_sm = pipeline_CO_sm.fit(train_CO_sm)
+forecast1d_CO_sm = pipeline_CO_sm.predict(test_CO_sm)
+
+
+plt.plot(T_input_data_sm.idx, T_input_data_sm.target, label='Source time series')
+plt.plot(forecast1d_sm.idx, np.ravel(forecast1d_sm.predict), label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("T log smoothed prediction")
+plt.savefig('Plot_6/T_pred_sm_log.png')
+plt.show()
+
+
+
+plt.plot(CO_input_data_sm.idx, CO_input_data_sm.target, label='Source time series')
+plt.plot(forecast1d_CO_sm.idx, np.ravel(forecast1d_CO_sm.predict), label='AR forecast')
+plt.grid()
+plt.legend()
+plt.xlim(250,390)
+plt.title("CO(GT) log smoothed prediction")
+plt.savefig('Plot_6/CO_pred_sm_log.png')
+plt.show()
+
+
+
+
+
+MSE_T_sm = mean_squared_error(np.ravel(forecast1d_sm.predict),test_T_sm.target)
+MAPE_T_sm = mean_absolute_percentage_error(test_T_sm.target, np.ravel(forecast1d_sm.predict))
+
+MSE_CO_sm = mean_squared_error(np.ravel(forecast1d_CO_sm.predict),test_CO_sm.target)
+MAPE_CO_sm = mean_absolute_percentage_error(test_CO_sm.target, np.ravel(forecast1d_CO_sm.predict))
+
+print("T_Predict log smoothed MSE = ", MSE_T_sm)
+print("T_Predict log smoothed MAPE = ", MAPE_T_sm)
+
+print("CO_Predict log smoothed MSE = ", MSE_CO_sm)
+print("CO_Predict log smoothed MAPE = ", MAPE_CO_sm)
+
+
+
+
+mean_squared_error(np.exp(np.ravel(forecast1d_sm.predict)),df_diff["T"][365:])
+mean_absolute_percentage_error(df_diff["T"][365:], np.exp(np.ravel(forecast1d_sm.predict)))
 
 
 
